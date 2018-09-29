@@ -1,0 +1,11 @@
+request
+    .get(
+      "https://rest.bandsintown.com/artists/" +
+        entry +
+        "?app_id=96818ce21839cd4310bb4d154bbe17e3"
+    )
+    .on("response", function(response) {
+      //console.log(response.statusCode);
+      console.dir(response); // 200
+      //console.log(response.headers["content-type"]); // 'image/png'
+    });

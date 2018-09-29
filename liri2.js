@@ -12,6 +12,37 @@ var fs = require("fs");
 
 var moment = require("moment");
 
+var inquirer = require("inquirer");
+
+var choice = [
+  {
+    type: "input",
+    message: "What is your name?",
+    name: "username"
+  },
+
+  {
+    type: "list",
+    message: "What can I do for you?",
+    choices: ["Spotify", "Bandsintown", "OMDB"],
+    name: "engine"
+  },
+  {
+    type: "confirm",
+    message: "Are you sure:",
+    name: "confirm",
+    default: true
+  }
+];
+
+var searchArray = [
+  {
+    type: "input",
+    message: "What do you want to search for?",
+    name: "entry"
+  }
+];
+
 var nodeArgs = process.argv;
 var useAPI = "";
 var entry = "";
@@ -33,7 +64,27 @@ for (var i = 2; i < nodeArgs.length; i++) {
   }
 }
 
-choose(useAPI, entry);
+inquirer.prompt(choice).then(function(inquirerResponse) {
+  if (inquirerResponse.confirm) {
+    console.log();
+    console.log("Welcome " + inquirerResponse.username);
+    console.log("You're going to search the " + inquirerResponse.engine);
+
+    inquirer.prompt(searchArray).then(function(inquirerResponse2) {
+      choose(inquirerResponse.engine, inquirerResponse2);
+      fs.appendFile(
+        "log.txt",
+        inquirerResponse.engine + "," + inquirerResponse2 + ";",
+        err => {
+          if (err) throw err;
+          console.log('The "data to append" was appended to file!');
+        }
+      );
+    }); //end interior search inquire
+  }
+});
+
+//choose(useAPI, entry);
 
 ////////////////////////////////////////////////////////
 //Functions
@@ -41,15 +92,15 @@ choose(useAPI, entry);
 
 function choose(text1, text2) {
   switch (text1) {
-    case "concert-this":
+    case "Bandsintown":
       bands(text2);
       break;
 
-    case "spotify-this-song":
+    case "Spotify":
       spotify(text2);
       break;
 
-    case "movie-this":
+    case "OMDB":
       getMovie(text2);
       break;
 
@@ -101,6 +152,7 @@ function bands(entry) {
     if (error) throw new Error(error);
 
     var show = JSON.parse(body);
+    // console.log("This is the whole she-bang: " + console.dir(show));
 
     if (show.length > 1) {
       show.forEach(event => {
@@ -158,7 +210,6 @@ function bands(entry) {
 } //end bands()
 
 function spotify(entry) {
-  console.log();
   console.log(entry);
 
   var spotify = new Spotify(keys.spotify);
@@ -198,32 +249,9 @@ function getMovie(entry) {
     //console.log(data);
 
     if (data["Response"] === "False") {
-      fs.readFile("random.txt", "utf8", function(error, data) {
-        if (error) {
-          return console.log(error);
-        }
-
-        var item1 = data.split("\n");
-        var item2 = item1[1].split(",");
-        console.log("item2[1] = " + item2[1]);
-
-        getMovie(item2[1]);
-        // choose("fail", entry);
-      });
+      choose("fail", entry);
     } else if (data["Title"] === "Undefined") {
       console.log("Add the Mr. Nobody garbage here.");
-
-      fs.readFile("random.txt", "utf8", function(error, data) {
-        if (error) {
-          return console.log(error);
-        }
-
-        var item1 = data.split("\n");
-        var item2 = item1[1].split(",");
-        console.log("item2[1] = " + item2[1]);
-
-        getMovie(item2[1]);
-      });
     } else if (!error && response.statusCode === 200) {
       const title = "Title";
       const year = "Year";
@@ -270,14 +298,47 @@ function getMovie(entry) {
 // end omdb()
 
 function dwits(entry) {
+  console.log("Haven't finished this content yet.");
+
   fs.readFile("random.txt", "utf8", function(error, data) {
     if (error) {
       return console.log(error);
     }
 
-    var item1 = data.split("\n");
-    var item2 = item1[0].split(",");
+    console.log(data);
+    var express = "spotify-this-song,";
+    console.log(
+      "Here's what happens when you replace: " + data.replace(express, "")
+    );
+    var firstIndex = data.search(",");
+    var secondIndex = data.search('"');
+    var thirdIndex = data.search('"');
 
-    spotify(item2[1]);
+    console.log(firstIndex);
+    console.log(secondIndex);
+    console.log(thirdIndex);
+
+    var item = data.slice(firstIndex, secondIndex);
+    var item2 = data.slice(secondIndex, thirdIndex);
+    var item3 = data.split(",");
+    var item4 = data.split("\n");
+    var item5 = item4[0].split(",");
+
+    console.log("the length of data: " + data.length);
+    console.log("item3.0 = " + item3[0]);
+    console.log("item3.1 = " + item3[1]);
+    console.log("item3.2 = " + item3[2]);
+    console.log("item4.0 = " + item4[0]);
+    console.log("item4.1 = " + item4[1]);
+    console.log("item5 = " + item5);
+    console.log("item5.0 = " + item5[0]);
+    console.log("item5.1 = " + item5[1]);
+    console.log("item5.2 = " + item5[2]);
+
+    console.log("length of item3 = " + item3.length);
+    console.log("item is " + item);
+    console.log("item2 is " + item2);
+    console.log("here's what happens when you search: " + data.search(',"'));
+    spotify(item5[1]);
   });
 } //end dwits()
