@@ -66,11 +66,11 @@ function choose(text1, text2) {
       );
       console.log();
 
-      fs.readFile("log.txt", (err, data) => {
+    /* fs.readFile("log.txt", (err, data) => {
         if (err) throw err;
         console.log(data);
       });
-
+      */
     default:
       console.log();
       console.log(
@@ -151,17 +151,20 @@ function bands(entry) {
         console.log();
       }
     } else {
-      console.log("Bandintown didn't find any events for " + entry + ".");
-      choose("fail", entry);
+      console.log("Bandsintown didn't find any events for " + entry + ".");
     }
   });
 } //end bands()
 
 function spotify(entry) {
   console.log();
-  console.log(entry);
+  //console.log(entry);
 
   var spotify = new Spotify(keys.spotify);
+
+  if (entry === "") {
+    entry = "I Want it That Way";
+  }
 
   spotify.search({ type: "track", limit: 1, query: entry }, function(
     err,
@@ -205,13 +208,13 @@ function getMovie(entry) {
 
         var item1 = data.split("\n");
         var item2 = item1[1].split(",");
-        console.log("item2[1] = " + item2[1]);
+        //console.log("item2[1] = " + item2[1]);
 
         getMovie(item2[1]);
         // choose("fail", entry);
       });
     } else if (data["Title"] === "Undefined") {
-      console.log("Add the Mr. Nobody garbage here.");
+      //console.log("Add the Mr. Nobody garbage here.");
 
       fs.readFile("random.txt", "utf8", function(error, data) {
         if (error) {
@@ -220,7 +223,7 @@ function getMovie(entry) {
 
         var item1 = data.split("\n");
         var item2 = item1[1].split(",");
-        console.log("item2[1] = " + item2[1]);
+        // console.log("item2[1] = " + item2[1]);
 
         getMovie(item2[1]);
       });
