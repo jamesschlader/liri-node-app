@@ -14,13 +14,17 @@ var moment = require("moment");
 
 var inquirer = require("inquirer");
 
-var choice = [
+var operator = "";
+
+var getOperator = [
   {
     type: "input",
     message: "What is your name?",
     name: "username"
-  },
+  }
+];
 
+var choices = [
   {
     type: "list",
     message: "What can I do for you?",
@@ -29,7 +33,7 @@ var choice = [
   },
   {
     type: "confirm",
-    message: "Are you sure:",
+    message: "Are you ready?",
     name: "confirm",
     default: true
   }
@@ -43,45 +47,23 @@ var searchArray = [
   }
 ];
 
-var nodeArgs = process.argv;
-var useAPI = "";
+var startOver = [
+  {
+    type: "list",
+    name: "over",
+    message: `Would you like to do another search, ${operator}?`,
+    choices: ["yes", "no"]
+  }
+];
+
+var nodeArgs = process.argv.slice(3).join("+");
+var useAPI = process.argv[2];
 var entry = "";
-//nodeArgs.push(entry);
 
-for (var i = 2; i < nodeArgs.length; i++) {
-  if (i > 1 && i < nodeArgs.length) {
-    if (i === 2) {
-      useAPI = nodeArgs[i];
-    } else {
-      if (i === nodeArgs.length - 1) {
-        entry = entry + nodeArgs[i];
-      } else {
-        entry = entry + nodeArgs[i] + "+";
-      }
-    }
-  } else {
-    entry += nodeArgs[i];
-  }
-}
-
-inquirer.prompt(choice).then(function(inquirerResponse) {
-  if (inquirerResponse.confirm) {
-    console.log();
-    console.log("Welcome " + inquirerResponse.username);
-    console.log("You're going to search the " + inquirerResponse.engine);
-
-    inquirer.prompt(searchArray).then(function(inquirerResponse2) {
-      choose(inquirerResponse.engine, inquirerResponse2);
-      fs.appendFile(
-        "log.txt",
-        inquirerResponse.engine + "," + inquirerResponse2 + ";",
-        err => {
-          if (err) throw err;
-          console.log('The "data to append" was appended to file!');
-        }
-      );
-    }); //end interior search inquire
-  }
+inquirer.prompt(getOperator).then(function(obj) {
+  console.log(obj);
+  operator = obj.username;
+  getStarted();
 });
 
 //choose(useAPI, entry);
@@ -90,22 +72,62 @@ inquirer.prompt(choice).then(function(inquirerResponse) {
 //Functions
 ////////////////////////////////////////////////////////
 
+function getStarted() {
+  inquirer.prompt(choices).then(obj => getChoices(obj));
+}
+
+function getChoices(inquirerResponse) {
+  if (inquirerResponse.confirm) {
+    console.log();
+    console.log("Welcome " + operator);
+    console.log(
+      "You're going to search the " + inquirerResponse.engine + " database."
+    );
+
+    inquirer
+      .prompt(searchArray)
+      .then(obj => sendSearch(inquirerResponse.engine, obj));
+  }
+}
+
+function sendSearch(text1, obj) {
+  choose(text1, obj.entry);
+
+  fs.appendFile("log.txt", text1 + "," + obj.entry + ";", err => {
+    if (err) throw err;
+    //console.log('The "data to append" was appended to file!');
+  });
+}
+
+function goAgain() {
+  inquirer.prompt(startOver).then(obj => {
+    if (obj.over === "yes") {
+      getStarted();
+    } else {
+      console.log(`It was nice working with you ${operator}. See ya around.`);
+    }
+  });
+}
+
 function choose(text1, text2) {
   switch (text1) {
     case "Bandsintown":
       bands(text2);
-      break;
 
+      break;
     case "Spotify":
       spotify(text2);
+
       break;
 
     case "OMDB":
       getMovie(text2);
+
       break;
 
     case "do-what-it-says":
       dwits(text2);
+
       break;
 
     case "fail":
@@ -117,11 +139,11 @@ function choose(text1, text2) {
       );
       console.log();
 
-      fs.readFile("log.txt", (err, data) => {
+    /* fs.readFile("log.txt", (err, data) => {
         if (err) throw err;
         console.log(data);
       });
-
+*/
     default:
       console.log();
       console.log(
@@ -203,14 +225,15 @@ function bands(entry) {
         console.log();
       }
     } else {
-      console.log("Bandintown didn't find any events for " + entry + ".");
+      console.log("Bandsintown didn't find any events for " + entry + ".");
       choose("fail", entry);
     }
+    goAgain();
   });
 } //end bands()
 
 function spotify(entry) {
-  console.log(entry);
+  //console.log(entry);
 
   var spotify = new Spotify(keys.spotify);
 
@@ -236,6 +259,7 @@ function spotify(entry) {
       );
       console.log();
     }
+
     bands(data.tracks.items[0].album.artists[0].name);
   });
 } //end spotify function
@@ -293,52 +317,7 @@ function getMovie(entry) {
     } else {
       choose("fail", entry);
     }
+    goAgain();
   });
 }
 // end omdb()
-
-function dwits(entry) {
-  console.log("Haven't finished this content yet.");
-
-  fs.readFile("random.txt", "utf8", function(error, data) {
-    if (error) {
-      return console.log(error);
-    }
-
-    console.log(data);
-    var express = "spotify-this-song,";
-    console.log(
-      "Here's what happens when you replace: " + data.replace(express, "")
-    );
-    var firstIndex = data.search(",");
-    var secondIndex = data.search('"');
-    var thirdIndex = data.search('"');
-
-    console.log(firstIndex);
-    console.log(secondIndex);
-    console.log(thirdIndex);
-
-    var item = data.slice(firstIndex, secondIndex);
-    var item2 = data.slice(secondIndex, thirdIndex);
-    var item3 = data.split(",");
-    var item4 = data.split("\n");
-    var item5 = item4[0].split(",");
-
-    console.log("the length of data: " + data.length);
-    console.log("item3.0 = " + item3[0]);
-    console.log("item3.1 = " + item3[1]);
-    console.log("item3.2 = " + item3[2]);
-    console.log("item4.0 = " + item4[0]);
-    console.log("item4.1 = " + item4[1]);
-    console.log("item5 = " + item5);
-    console.log("item5.0 = " + item5[0]);
-    console.log("item5.1 = " + item5[1]);
-    console.log("item5.2 = " + item5[2]);
-
-    console.log("length of item3 = " + item3.length);
-    console.log("item is " + item);
-    console.log("item2 is " + item2);
-    console.log("here's what happens when you search: " + data.search(',"'));
-    spotify(item5[1]);
-  });
-} //end dwits()
